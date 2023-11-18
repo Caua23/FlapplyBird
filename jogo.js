@@ -1,5 +1,8 @@
 console.log('[©Dev Vargas]');
 
+const somDeHit = new Audio()
+somDeHit.src = './efeitos/hit.wav'
+
 const sprites = new Image();
 sprites.src = './sprites.png';
 
@@ -67,47 +70,76 @@ const chao = {
   }
 }
 
-//passaro
-const flapplyBird = {
-  spritesX: 0,
-  spritesY: 0,
-  largura: 33,
-  altura: 24,
-  x: 10,
-  y: 50,
+function fazColisao(flapplyBird, chao) {
+  const flapplyBirdY = flapplyBird.y + flapplyBird.altura
+  const chaoY = chao.y
 
-  gravidade: 0.25,
-  velocidade: 0,
-
-  atualiza() {
-    flapplyBird.velocidade = flapplyBird.velocidade + flapplyBird.gravidade
-
-    flapplyBird.y = flapplyBird.y + flapplyBird.velocidade
-    // codigo q faz o passaro cair,seria meio que uma gravidade
-
-  },
-
-  desenha() {
-    contexto.drawImage(
-      sprites,
-      flapplyBird.spritesX, flapplyBird.spritesY, //Sprite X e Y
-      flapplyBird.largura, flapplyBird.altura,//tamnha do recorte no sprite
-      flapplyBird.x, flapplyBird.y, //aonde vai aparecer
-      flapplyBird.largura, flapplyBird.altura, //tamnha q vai aparecer
-
-      /*
-      0, 0,      Sprite X e Y
-      33, 24,    tamnha do recorte no sprite
-      10, 50,    aonde vai aparecer
-      33, 24,    tamnha q vai aparecer
-      
-      esse codigo ele é uma function para organizar o seu 
-      codigo ,que vc cria para desenhar o passaro e logo 
-      chama ele na (funciton loop)
-      */
-    )
+  if (flapplyBirdY >= chaoY) {
+    return true
   }
+  return false
+
 }
+
+
+//passaro
+function criaFlappyBird() {
+  const flapplyBird = {
+    spritesX: 0,
+    spritesY: 0,
+    largura: 33,
+    altura: 24,
+    x: 10,
+    y: 50,
+
+
+    pulo: 4.6,
+    Pula() {
+      console.log('pula')
+      flapplyBird.velocidade = - flapplyBird.pulo
+    },
+
+    gravidade: 0.25,
+    velocidade: 0,
+
+    atualiza() {
+      if (fazColisao(flapplyBird, chao)) {
+        console.log('fez colizao')
+        somDeHit.play()
+        mudaParaTela(Telas.inicio)
+        return
+      }
+
+      flapplyBird.velocidade = flapplyBird.velocidade + flapplyBird.gravidade
+      flapplyBird.y = flapplyBird.y + flapplyBird.velocidade
+      // codigo q faz o passaro cair,seria meio que uma gravidade
+
+    },
+
+    desenha() {
+      contexto.drawImage(
+        sprites,
+        flapplyBird.spritesX, flapplyBird.spritesY, //Sprite X e Y
+        flapplyBird.largura, flapplyBird.altura,//tamnha do recorte no sprite
+        flapplyBird.x, flapplyBird.y, //aonde vai aparecer
+        flapplyBird.largura, flapplyBird.altura, //tamnha q vai aparecer
+
+        /*
+        0, 0,      Sprite X e Y
+        33, 24,    tamnha do recorte no sprite
+        10, 50,    aonde vai aparecer
+        33, 24,    tamnha q vai aparecer
+        
+        esse codigo ele é uma function para organizar o seu 
+        codigo ,que vc cria para desenhar o passaro e logo 
+        chama ele na (funciton loop)
+        */
+      )
+    }
+  }
+  return flapplyBird
+}
+
 
 //msg de inicio
 const mensgemGetReady = {
@@ -129,19 +161,29 @@ const mensgemGetReady = {
 }
 
 //[Telas]
+const globais = {};
 let telaAtiva = {};
+
 function mudaParaTela(novaTela) {
-  telaAtiva = novaTela
+  telaAtiva = novaTela;
+
+  if (telaAtiva.inicializa) {
+    telaAtiva.inicializa()
+  }
 };
+
 //Essa function faz mudar a tela ativa
 
 const Telas = {
   inicio: {
+    inicializa() {
+      globais.flapplyBird = criaFlappyBird();
+    },
     desenha() {
-      
+
       planoDeFundo.desenha()
       chao.desenha()
-      flapplyBird.desenha()
+      globais.flapplyBird.desenha()
       mensgemGetReady.desenha()
     },
 
@@ -158,14 +200,17 @@ const Telas = {
 
 Telas.Jogo = {
   desenha() {
-    
+
     planoDeFundo.desenha()
     chao.desenha()
-    flapplyBird.desenha()
+    globais.flapplyBird.desenha()
   },
 
+  click() {
+    globais.flapplyBird.Pula()
+  },
   atualiza() {
-    flapplyBird.atualiza()
+    globais.flapplyBird.atualiza()
   }
 }
 
@@ -175,11 +220,11 @@ essa tag ela que chama a function para fazer o desenho na tela
 São telas que podem ser alternadas entre si
 */
 
-function loop() { 
+function loop() {
   //esta em loop para ficar sempre desenhando
   telaAtiva.desenha();
   telaAtiva.atualiza();
-  console.log(telaAtiva);
+
   requestAnimationFrame(loop)
   //ajuda a desenhar na tela os quadros
 
@@ -192,7 +237,7 @@ function loop() {
 }
 
 
-window.addEventListener('click', function(){
+window.addEventListener('click', function () {
   if (telaAtiva && telaAtiva.click) {
     telaAtiva.click();
   }
